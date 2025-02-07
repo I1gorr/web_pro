@@ -1,7 +1,7 @@
-import './App.css'
+import './heropage.css'
 import AboutSection from './AboutSection'
 import Signin from './SignIn'
-function App() {
+function Heropage() {
   return (
     <>
     <div id="root"> {/* Ensure correct structure */}
@@ -15,4 +15,4 @@ function App() {
   )
 }
 
-export default App
+export default Heropage;
