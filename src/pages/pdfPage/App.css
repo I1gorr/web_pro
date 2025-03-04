@@ -1,0 +1,127 @@
+/* Reset & Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #2E1A47;
+}
+
+/* Main App Layout */
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Left Sidebar (Navbar) */
+.navbar {
+  width: 250px;
+  height: 100vh;
+  background-color: #5A3E91;
+  color: #FDFEFE;
+  padding: 20px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-button {
+  background-color: transparent;
+  border: 1px solid #FDFEFE;
+  color: #FDFEFE;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.nav-button:hover {
+  background-color: #E07A5F;
+  color: #2E1A47;
+}
+
+/* PDF Viewer (Takes Remaining Space) */
+.doc {
+  flex-grow: 1;
+  margin-left: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  padding: 20px;
+  overflow: auto;
+  width: calc(100vw - 250px);
+  height: 100vh;
+}
+
+/* Floating Navigation & Zoom Controls */
+.controls {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+}
+
+.controls button {
+  border: none;
+  background: none;
+  color: #FDFEFE;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: 0.2s;
+}
+
+.controls button:hover {
+  color: #E07A5F;
+}
+
+.controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* PDF Pages */
+.react-pdf__Page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.react-pdf__Page canvas {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Page Number Text */
+.pagenum {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #FDFEFE;
+}
+
