@@ -144,7 +144,6 @@
   border: none;
   padding: 10px;
   border-radius: 10px;
-  transition: background 0.3s ease;
 }
 
 .chat-input button:hover {

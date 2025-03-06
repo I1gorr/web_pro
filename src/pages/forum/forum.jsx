@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import "./forum.css";
 
 export default function Forum() {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [newPost, setNewPost] = useState({
@@ -178,6 +180,11 @@ export default function Forum() {
           </div>
         </div>
       </div>
+
+      {/* Navigate Button */}
+      <button className="navigate-button" onClick={() => navigate("/notes")}>
+        Your Notes
+      </button>
     </StyledForumContainer>
   );
 }
@@ -211,5 +218,22 @@ const StyledForumContainer = styled.div`
     border-radius: 5px;
     background: #1e1f29;
     color: white;
+  }
+
+  .navigate-button {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    padding: 10px 15px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .navigate-button:hover {
+    background: #0056b3;
   }
 `;

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "./App.css";
+import "./pdfPage.css";
 import Navbar from "./Navbar";
 import Button from "./Button";
 import PopButton from "./PopButton";

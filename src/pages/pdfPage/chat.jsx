@@ -132,7 +132,12 @@ export default function Chat() {
                     >
                       <MDBCardBody className="p-2">
                         <strong>{msg.sender}</strong>
-                        <p className="mb-0">{msg.text}</p>
+                        <p
+                          className="mb-0"
+                          dangerouslySetInnerHTML={{
+                            __html: msg.text.replace(/\n/g, "<br />"),
+                          }}
+                        ></p>
                       </MDBCardBody>
                     </MDBCard>
                   </li>

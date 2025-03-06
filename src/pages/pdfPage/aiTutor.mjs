@@ -18,8 +18,14 @@ const llm = new Ollama({
   top_p: 0.85,
   presence_penalty: 0.6,
   frequency_penalty: 0.5,
-  system_prompt: `You are an AI tutor assisting students. You can read and understand various file formats.`,
+  system_prompt: `You are an AI tutor assisting students in an interactive chat. 
+  - Your responses should be **clear, concise, and structured**. 
+  - When explaining concepts, use **short paragraphs, bullet points, and examples**.
+  - Use line breaks to improve readability in the chatbox.
+  - If a user asks for step-by-step guidance, number the steps for clarity.
+  - Keep explanations **friendly and engaging**.`,
 });
+
 
 sessionMemory.conversation = [];
 sessionMemory.fileContents = {};
@@ -55,19 +61,20 @@ async function extractTextFromPDF(filePath) {
   try {
     const pdfBytes = fs.readFileSync(filePath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
+    const pages = pdfDoc.getPages();
     let text = "";
 
-    for (const page of pdfDoc.getPages()) {
-      text += page.getTextContent() + "\n\n";
+    for (const page of pages) {
+      const { items } = await page.getTextContent();
+      text += items.map(item => item.str).join(" ") + "\n\n"; // Extracts text properly
     }
 
-    return text.trim();
+    return text.trim() || "❌ No text found in PDF.";
   } catch (error) {
     console.error(`Error reading PDF: ${filePath}`, error);
     return "❌ Error reading PDF.";
   }
 }
-
 /**
  * Reads any file and sends it for Python processing
  */
@@ -78,8 +85,16 @@ async function readAnyFile(filePath) {
       return `❌ File not found: ${filePath}`;
     }
 
-    const processedData = await processFileWithPython(absolutePath);
-    return processedData;
+    let fileContent = "";
+
+    if (filePath.endsWith(".pdf")) {
+      fileContent = await extractTextFromPDF(absolutePath);
+    } else {
+      fileContent = fs.readFileSync(absolutePath, "utf8");
+    }
+
+    sessionMemory.fileContents[filePath] = fileContent; // Store content for AI context
+    return `✅ Successfully read: ${filePath}`;
   } catch (error) {
     console.error(`❌ Read Error: ${filePath}`, error);
     return `❌ Error reading file: ${filePath}`;
