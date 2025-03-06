@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styled from 'styled-components';
+import styled from "styled-components";
 import "./forum.css";
 
 export default function Forum() {
@@ -14,8 +14,7 @@ export default function Forum() {
   const [expandedPost, setExpandedPost] = useState(null);
 
   const addPost = () => {
-    if (newPost.username.trim() === "" || newPost.content.trim() === "")
-      return;
+    if (newPost.username.trim() === "" || newPost.content.trim() === "") return;
     const post = {
       id: Date.now(),
       username: newPost.username,
@@ -42,57 +41,23 @@ export default function Forum() {
       ? posts
       : posts.filter((post) => post.category === filterCategory);
 
-  const Radio = ({ onChange }) => {
-    const handleChange = (e) => {
-      onChange(e.target.value);
-    };
-
-    return (
-      <StyledWrapper>
-        <div className="select">
-          <div className="selected" data-default="All" data-one="Maths" data-two="Science" data-three="Computers" data-four="Misc">
-            <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512" className="arrow">
-              <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
-            </svg>
-          </div>
-          <div className="options">
-            <div title="all">
-              <input id="all" name="option" type="radio" value="All" defaultChecked onChange={handleChange} />
-              <label className="option" htmlFor="all" data-txt="All" />
-            </div>
-            <div title="Maths">
-              <input id="option-1" name="option" type="radio" value="Maths" onChange={handleChange} />
-              <label className="option" htmlFor="option-1" data-txt="Maths" />
-            </div>
-            <div title="Science">
-              <input id="option-2" name="option" type="radio" value="Science" onChange={handleChange} />
-              <label className="option" htmlFor="option-2" data-txt="Science" />
-            </div>
-            <div title="Computers">
-              <input id="option-3" name="option" type="radio" value="Computers" onChange={handleChange} />
-              <label className="option" htmlFor="option-3" data-txt="Computers" />
-            </div>
-            <div title="Misc">
-              <input id="option-4" name="option" type="radio" value="Misc" onChange={handleChange} />
-              <label className="option" htmlFor="option-4" data-txt="Misc" />
-            </div>
-          </div>
-        </div>
-      </StyledWrapper>
-    );
-  }
-
   return (
     <StyledForumContainer>
-      {/* Filter Bar */}
-      <div className="domainFilter">
-      <p>Filter by domain</p>
+      {/* Floating Filter Dropdown */}
+      <div className="floating-filter">
+        <label>Filter by domain:</label>
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+        >
+          <option value="All">All</option>
+          <option value="Maths">Maths</option>
+          <option value="Science">Science</option>
+          <option value="Computers">Computers</option>
+          <option value="Misc">Misc</option>
+        </select>
       </div>
-      <div className="filter-bar">
-        <Radio onChange={(value) => setFilterCategory(value)} />
-      </div>
-      
-        
+
       {/* Search Bar */}
       <div className="search-bar">
         <input
@@ -102,6 +67,7 @@ export default function Forum() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
+
       {/* Center Content */}
       <div className="center-content">
         <div className="content-wrapper">
@@ -139,6 +105,7 @@ export default function Forum() {
             <br />
             <button onClick={addPost}>Post</button>
           </div>
+
           {/* Posts */}
           <div>
             {filteredPosts.length > 0 ? (
@@ -173,6 +140,7 @@ export default function Forum() {
                     <p>
                       <strong>Domain:</strong> {post.category}
                     </p>
+
                     {/* Answers */}
                     {expandedPost === post.id && (
                       <div>
@@ -214,111 +182,34 @@ export default function Forum() {
   );
 }
 
-const StyledWrapper = styled.div`
-  .select {
-    width: fit-content;
-    cursor: pointer;
-    position: relative;
-    transition: 300ms;
-    color: white;
-    overflow: hidden;
-  }
-
-  .selected {
-    background-color: #2a2f3b;
-    padding: 5px;
-    margin-bottom: 3px;
-    border-radius: 5px;
-    position: relative;
-    z-index: 100000;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .arrow {
-    position: relative;
-    right: 0px;
-    height: 10px;
-    transform: rotate(-90deg);
-    width: 25px;
-    fill: white;
-    z-index: 100000;
-    transition: 300ms;
-  }
-
-  .options {
-    display: flex;
-    flex-direction: column;
-    border-radius: 5px;
-    padding: 5px;
-    background-color: #2a2f3b;
-    position: relative;
-    top: -100px;
-    opacity: 0;
-    transition: 300ms;
-  }
-
-  .select:hover > .options {
-    opacity: 1;
-    top: 0;
-  }
-
-  .select:hover > .selected .arrow {
-    transform: rotate(0deg);
-  }
-
-  .option {
-    border-radius: 5px;
-    padding: 5px;
-    transition: 300ms;
-    background-color: #2a2f3b;
-    width: 150px;
-    font-size: 15px;
-  }
-  .option:hover {
-    background-color: #323741;
-  }
-
-  .options input[type="radio"] {
-    display: none;
-  }
-
-  .options label {
-    display: inline-block;
-  }
-  .options label::before {
-    content: attr(data-txt);
-  }
-
-  .options input[type="radio"]:checked + label {
-    display: none;
-  }
-
-  .options input[type="radio"]#all:checked + label {
-    display: none;
-  }
-
-  .select:has(.options input[type="radio"]#all:checked) .selected::before {
-    content: attr(data-default);
-  }
-  .select:has(.options input[type="radio"]#option-1:checked) .selected::before {
-    content: attr(data-one);
-  }
-  .select:has(.options input[type="radio"]#option-2:checked) .selected::before {
-    content: attr(data-two);
-  }
-  .select:has(.options input[type="radio"]#option-3:checked) .selected::before {
-    content: attr(data-three);
-  }
-  .select:has(.options input[type="radio"]#option-4:checked) .selected::before {
-    content: attr(data-four);
-  }
-`;
-
 const StyledForumContainer = styled.div`
   height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+
+  .floating-filter {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: #1e1f29;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+    color: white;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .floating-filter label {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+
+  .floating-filter select {
+    padding: 5px;
+    border-radius: 5px;
+    background: #1e1f29;
+    color: white;
+  }
 `;
