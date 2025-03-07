@@ -3,8 +3,11 @@ import Heropage from "./pages/landingPage/heropage";
 import SignInPage from "./pages/signIn/Card"; // Ensure this path is correct
 import Forum from "./pages/forum/forum"
 import MyApp from "./pages/pdfPage/pdfPage";
+
+
 export default function App() {
   return (
+    <>
     <Router>
       <Routes>
         <Route path="/" element={<Heropage />} />
@@ -13,5 +16,6 @@ export default function App() {
         <Route path="/notes" element={<MyApp />} />
       </Routes>
     </Router>
+    </>
   );
 }

@@ -9,10 +9,7 @@ export default function BasicButtons() {
   return (
     <Stack spacing={2} direction="row">
       <Button variant="contained" onClick={() => navigate("/signin")}>
-        Log in
-      </Button>
-      <Button variant="contained" onClick={() => navigate("/signin")}>
-        Sign up
+        Start
       </Button>
     </Stack>
   );

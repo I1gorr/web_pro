@@ -6,7 +6,7 @@ const DiverseNotesRepository = () => {
   return (
     <div className="container" style={{ width: "100%", height: "100%" }} >
       <div className="text-content">
-        <h1>DIVERSE NOTES REPOSITORY</h1>
+        <h1 style={{ paddingBottom:"30px"}}>DIVERSE NOTES REPOSITORY</h1>
 
         <div className="feature">
           <h3>Upload Notes</h3>

@@ -31,10 +31,10 @@ body, html {
     align-items: center;
     text-align: center;
     width: 100vw;
-    min-height: 100vh;
+   
 }
 
-/* Font styles */
+/* Font styles */   
 .pixel-font, h1 {
     font-family: 'Press Start 2P', cursive;
     color: var(--yellow);

@@ -3,7 +3,7 @@ function AboutSection(){
 
 return(
         <div className='AboutSection'>
-        <h1>Welcome to EduShare!</h1>
+        <h1 style={{paddingBottom:"30px"}}>Welcome to EduShare!</h1>
         <div className='keypoints'>
           <p>Brighten up your day by diving into a sea of knowledge, contributed by students just like you.</p>
           <p>Say goodbye to the days when exam preparation was a solitary chore. Join us on this extraordinary journey for an immersive learning experience.</p>

@@ -7,12 +7,14 @@ import DiverseNotesRepository from "./DiverseNotes";
 
 function Heropage() {
   return (
+    <>
     <div id="root">
-      <AnimatedTitle />
+      <AnimatedTitle></AnimatedTitle>
       <AboutSection />
       <SignIn />
       <DiverseNotesRepository />
     </div>
+    </>
   );
 }
 
