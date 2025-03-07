@@ -1,128 +1,149 @@
-/* Reset & Global Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  background-color: #2E1A47;
-}
-
-/* Main App Layout */
+/* Ensure the app covers the full viewport */
 .app {
   display: flex;
-  height: 100vh;
+  flex-direction: column;
   width: 100vw;
+  height: 100vh;
+  background-color: #121212;
+  color: white;
   overflow: hidden;
 }
 
-/* Left Sidebar (Navbar) */
-.navbar {
-  width: 250px;
-  height: 100vh;
-  background-color: #5A3E91;
-  color: #FDFEFE;
-  padding: 20px;
-  position: fixed;
-  left: 0;
-  top: 0;
-  overflow-y: auto;
+/* Content is divided into two equal halves */
+.content {
   display: flex;
-  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  height: 100%;
 }
 
-.navbar h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.nav-buttons {
+/* PDF Viewer on the left */
+.pdf-viewer {
+  flex: 1;
   display: flex;
+  width: 75%;
   flex-direction: column;
-  gap: 10px;
-}
-
-.nav-button {
-  background-color: transparent;
-  border: 1px solid #FDFEFE;
-  color: #FDFEFE;
+  align-items: center;
+  background: #181818;
   padding: 10px;
-  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Styling for the document */
+.doc {
+  flex: 1; /* Take available space */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  background: #202020;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* Controls (Zoom & Navigation Buttons) - Positioned at Bottom */
+.controls {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: #222;
+  border-top: 2px solid #333;
+}
+
+.controls button {
+  background: #444;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
   cursor: pointer;
   transition: 0.3s;
 }
 
-.nav-button:hover {
-  background-color: #E07A5F;
-  color: #2E1A47;
+.controls button:hover {
+  background: #666;
 }
 
-/* PDF Viewer (Takes Remaining Space) */
-.doc {
-  flex-grow: 1;
-  margin-left: 250px;
+.pagenum {
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Chatbox on the right */
+.chat-box {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: flex-start;
+  background: #1e1e1e;
+  padding: 10px;
+  overflow: hidden;
   position: relative;
-  padding: 20px;
-  overflow: auto;
-  width: calc(100vw - 250px);
-  height: 100vh;
+  width: 25%;
 }
 
-/* Floating Navigation & Zoom Controls */
-.controls {
-  position: fixed;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  z-index: 100;
-}
 
-.controls button {
+/* Send button */
+.send-button {
+  padding: 8px 12px;
+  background: orange;
   border: none;
-  background: none;
-  color: #FDFEFE;
-  font-size: 20px;
+  border-radius: 5px;
   cursor: pointer;
-  padding: 5px 10px;
-  transition: 0.2s;
+  color: black;
+  font-weight: bold;
 }
 
-.controls button:hover {
-  color: #E07A5F;
+.send-button:hover {
+  background: darkorange;
 }
 
-.controls button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* Navbar positioned at the top-right */
+.navbar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 250px;
+  background: #222;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
 }
 
-/* PDF Pages */
-.react-pdf__Page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* Navbar hidden by default */
+.navbar.closed {
+  transform: translateX(110%);
 }
 
-.react-pdf__Page canvas {
-  width: auto !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+/* Navbar open */
+.navbar.open {
+  transform: translateX(0);
 }
 
-/* Page Number Text */
-.pagenum {
-  margin-top: 10px;
-  font-size: 16px;
-  color: #FDFEFE;
+/* Navbar Toggle Button */
+.nav-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #333;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 1100;
 }
 
+.nav-toggle:hover {
+  background: #555;
+}

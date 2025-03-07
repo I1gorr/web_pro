@@ -5,7 +5,6 @@ import path from "path";
 import { spawn } from "child_process";
 import { PDFDocument } from "pdf-lib";
 import { Ollama } from "@langchain/ollama";
-import { listFilesAndFolders, changeDirectory, goBack, sessionMemory } from "./directoryUtils.mjs";
 
 const app = express();
 app.use(cors());
@@ -26,36 +25,63 @@ const llm = new Ollama({
   - Keep explanations **friendly and engaging**.`,
 });
 
-
-sessionMemory.conversation = [];
-sessionMemory.fileContents = {};
-
-const BASE_DIRECTORY = process.cwd();
+// Memory for storing session data
+const sessionMemory = {
+  conversation: [],
+  fileContents: {},
+  currentDirectory: process.cwd(),
+};
 
 /**
- * Calls Python script to process file
+ * Recursively lists files and folders
  */
-function processFileWithPython(filePath) {
-  return new Promise((resolve, reject) => {
-    const pythonProcess = spawn("python3", ["process_file.py", filePath]);
-    let data = "";
+function listFilesAndFolders(dir = sessionMemory.currentDirectory, depth = 1) {
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    let output = `📂 Directory: ${dir}\n`;
 
-    pythonProcess.stdout.on("data", (chunk) => {
-      data += chunk.toString();
+    entries.forEach((entry, index) => {
+      output += entry.isDirectory()
+        ? `📁 [${index}] ${entry.name}/\n`
+        : `📄 [${index}] ${entry.name}\n`;
     });
 
-    pythonProcess.stderr.on("data", (err) => {
-      console.error("Python Error:", err.toString());
-    });
-
-    pythonProcess.on("close", () => {
-      resolve(data.trim());
-    });
-  });
+    return output || "📂 Directory is empty.";
+  } catch (error) {
+    return `❌ Error listing files: ${error.message}`;
+  }
 }
 
 /**
- * Reads and extracts text from a PDF using pdf-lib
+ * Change directory
+ */
+function changeDirectory(folderName) {
+  const newPath = path.join(sessionMemory.currentDirectory, folderName);
+
+  if (!fs.existsSync(newPath) || !fs.lstatSync(newPath).isDirectory()) {
+    return `❌ Directory not found: ${folderName}`;
+  }
+
+  sessionMemory.currentDirectory = newPath;
+  return `📂 Changed directory to: ${newPath}`;
+}
+
+/**
+ * Go back to the parent directory
+ */
+function goBack() {
+  const parentDir = path.dirname(sessionMemory.currentDirectory);
+
+  if (parentDir === sessionMemory.currentDirectory) {
+    return "🔒 Already at the root directory.";
+  }
+
+  sessionMemory.currentDirectory = parentDir;
+  return `📂 Moved up to: ${parentDir}`;
+}
+
+/**
+ * Extracts text from PDFs using pdf-lib
  */
 async function extractTextFromPDF(filePath) {
   try {
@@ -66,58 +92,52 @@ async function extractTextFromPDF(filePath) {
 
     for (const page of pages) {
       const { items } = await page.getTextContent();
-      text += items.map(item => item.str).join(" ") + "\n\n"; // Extracts text properly
+      text += items.map((item) => item.str).join(" ") + "\n\n";
     }
 
     return text.trim() || "❌ No text found in PDF.";
   } catch (error) {
-    console.error(`Error reading PDF: ${filePath}`, error);
-    return "❌ Error reading PDF.";
+    return `❌ Error reading PDF: ${error.message}`;
   }
 }
+
 /**
- * Reads any file and sends it for Python processing
+ * Reads any file (TXT, MD, JSON, JS, etc.)
  */
 async function readAnyFile(filePath) {
   try {
-    const absolutePath = path.resolve(BASE_DIRECTORY, filePath);
+    const absolutePath = path.resolve(sessionMemory.currentDirectory, filePath);
     if (!fs.existsSync(absolutePath)) {
       return `❌ File not found: ${filePath}`;
     }
 
     let fileContent = "";
-
     if (filePath.endsWith(".pdf")) {
       fileContent = await extractTextFromPDF(absolutePath);
     } else {
       fileContent = fs.readFileSync(absolutePath, "utf8");
     }
 
-    sessionMemory.fileContents[filePath] = fileContent; // Store content for AI context
+    sessionMemory.fileContents[filePath] = fileContent;
     return `✅ Successfully read: ${filePath}`;
   } catch (error) {
-    console.error(`❌ Read Error: ${filePath}`, error);
-    return `❌ Error reading file: ${filePath}`;
+    return `❌ Error reading file: ${error.message}`;
   }
 }
 
 /**
- * Handles multiple file selection
+ * Selects multiple files for context
  */
 async function selectMultipleFiles(fileNames) {
   let response = "";
-
   for (const fileName of fileNames) {
-    const fileContent = await readAnyFile(fileName);
-    sessionMemory.fileContents[fileName] = fileContent;
-    response += `✅ Processed file: ${fileName}\n`;
+    response += await readAnyFile(fileName) + "\n";
   }
-
   return response;
 }
 
 /**
- * API Endpoint for chat processing
+ * AI Chat Processing with Context
  */
 app.post("/chat", async (req, res) => {
   const userMessage = req.body.message;
@@ -129,12 +149,11 @@ app.post("/chat", async (req, res) => {
   if (userMessage.toLowerCase() === "list files") {
     botResponse = listFilesAndFolders();
   } else if (userMessage.startsWith("cd ")) {
-    const folderName = userMessage.substring(3);
-    botResponse = changeDirectory(folderName);
+    botResponse = changeDirectory(userMessage.substring(3));
   } else if (userMessage.toLowerCase() === "go back") {
     botResponse = goBack();
   } else if (userMessage.startsWith("open ")) {
-    const fileNames = userMessage.substring(5).split(",").map(f => f.trim());
+    const fileNames = userMessage.substring(5).split(",").map((f) => f.trim());
     botResponse = await selectMultipleFiles(fileNames);
   } else {
     const fileContext = Object.entries(sessionMemory.fileContents)

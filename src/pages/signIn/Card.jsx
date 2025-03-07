@@ -4,7 +4,7 @@ import styled from "styled-components";
 
 const SignInPage = () => {
   const location = useLocation();
-  const navigate = useNavigate(); // ⬅️ Add this for navigation
+  const navigate = useNavigate(); // ⬅️ Navigation hook
 
   const [isRegister, setIsRegister] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,16 +39,16 @@ const SignInPage = () => {
 
   return (
     <StyledWrapper>
-      <div className="card">
-        <div className="head">{isRegister ? "Register" : "Login"}</div>
-        <div className="content">
-          <form onSubmit={handleSubmit}>
+      <div id="auth-card">
+        <div id="auth-header">{isRegister ? "Register" : "Login"}</div>
+        <div id="auth-content">
+          <form id="auth-form" onSubmit={handleSubmit}>
             {isRegister && (
               <input
                 type="text"
+                id="username-input"
                 name="username"
                 placeholder="Username"
-                className="input"
                 value={formData.username}
                 onChange={handleChange}
                 required
@@ -56,27 +56,27 @@ const SignInPage = () => {
             )}
             <input
               type="email"
+              id="email-input"
               name="email"
               placeholder="Email"
-              className="input"
               value={formData.email}
               onChange={handleChange}
               required
             />
             <input
               type="password"
+              id="password-input"
               name="password"
               placeholder="Password"
-              className="input"
               value={formData.password}
               onChange={handleChange}
               required
             />
-            <button type="submit" className="button">
+            <button type="submit" id="submit-btn">
               {isRegister ? "Register" : "Login"}
             </button>
           </form>
-          <button className="switch" onClick={() => setIsRegister(!isRegister)}>
+          <button id="toggle-auth-btn" onClick={() => setIsRegister(!isRegister)}>
             {isRegister ? "Switch to Login" : "Switch to Register"}
           </button>
         </div>
@@ -93,7 +93,7 @@ const StyledWrapper = styled.div`
   height: 100vh;
   background: #2e1a62;
 
-  .card {
+  #auth-card {
     font-family: Montserrat, sans-serif;
     width: 320px;
     padding: 20px;
@@ -103,7 +103,7 @@ const StyledWrapper = styled.div`
     text-align: center;
   }
 
-  .head {
+  #auth-header {
     font-size: 18px;
     font-weight: 900;
     background: #e57c00;
@@ -112,11 +112,13 @@ const StyledWrapper = styled.div`
     border-bottom: 3px solid #e57c00;
   }
 
-  .content {
+  #auth-content {
     padding: 15px;
   }
 
-  .input {
+  #username-input,
+  #email-input,
+  #password-input {
     width: 100%;
     padding: 10px;
     margin: 10px 0;
@@ -126,7 +128,7 @@ const StyledWrapper = styled.div`
     color: #ffffff;
   }
 
-  .button, .switch {
+  #submit-btn {
     width: 100%;
     padding: 10px;
     margin-top: 10px;
@@ -138,7 +140,26 @@ const StyledWrapper = styled.div`
     transition: all 0.3s ease;
   }
 
-  .button:hover, .switch:hover {
+  #submit-btn:hover {
+    background: #4d47c3;
+    color: #ffffff;
+  }
+
+  #toggle-auth-btn {
+    width: auto;
+    display: inline-block;
+    padding: 10px 15px;
+    margin-top: 10px;
+    border: 3px solid #645dd7;
+    background: #ffb400;
+    color: #000000;
+    cursor: pointer;
+    font-weight: 750;
+    transition: all 0.3s ease;
+    text-align: center;
+  }
+
+  #toggle-auth-btn:hover {
     background: #4d47c3;
     color: #ffffff;
   }

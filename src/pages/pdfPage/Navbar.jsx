@@ -1,24 +1,33 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
 const Navbar = ({ onPdfSelect }) => {
-  const pdfFiles = [
-    { name: "23bce1370", path: "/23bce1370.pdf" },
-    { name: "OS Module 1", path: "/os_1.pdf" },
-    { name: "Module 3", path: "/os_3.pdf" },
-    { name: "AI Notes", path: "/ai.pdf" },
-    { name: "Document 5", path: "/document5.pdf" },
-  ];
+  const [pdfFiles, setPdfFiles] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/list-pdfs") // Fetch the available PDFs
+      .then((res) => res.json())
+      .then((data) => setPdfFiles(data))
+      .catch((error) => console.error("Error fetching PDFs:", error));
+  }, []);
 
   return (
     <NavWrapper>
-      <h2 className="title">PDF Documents</h2>
+      <h2 className="title">Available PDFs</h2>
       <div className="nav-buttons">
-        {pdfFiles.map((pdf, index) => (
-          <button key={index} className="nav-button" onClick={() => onPdfSelect(pdf.path)}>
-            {pdf.name}
-          </button>
-        ))}
+        {pdfFiles.length > 0 ? (
+          pdfFiles.map((pdf, index) => (
+            <button
+              key={index}
+              className="nav-button"
+              onClick={() => onPdfSelect(`http://localhost:5000/pdfs/${pdf}`)}
+            >
+              {pdf}
+            </button>
+          ))
+        ) : (
+          <p className="no-files">No PDFs found</p>
+        )}
       </div>
     </NavWrapper>
   );
@@ -64,6 +73,12 @@ const NavWrapper = styled.div`
 
   .nav-button:active {
     background: #F38701;
+  }
+
+  .no-files {
+    color: #ffcccb;
+    text-align: center;
+    font-size: 14px;
   }
 `;
 
