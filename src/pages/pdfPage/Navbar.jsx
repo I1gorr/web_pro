@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
+const API_URL = "http://localhost:5001/api/list-pdfs"; // Backend API URL
+
 const Navbar = ({ onPdfSelect }) => {
   const [pdfFiles, setPdfFiles] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/list-pdfs") // Fetch the available PDFs
+    fetch(API_URL)
       .then((res) => res.json())
       .then((data) => setPdfFiles(data))
       .catch((error) => console.error("Error fetching PDFs:", error));
@@ -20,7 +22,7 @@ const Navbar = ({ onPdfSelect }) => {
             <button
               key={index}
               className="nav-button"
-              onClick={() => onPdfSelect(`http://localhost:5000/pdfs/${pdf}`)}
+              onClick={() => onPdfSelect(`http://localhost:5001/pdfs/${pdf}`)}
             >
               {pdf}
             </button>

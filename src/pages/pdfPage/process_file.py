@@ -1,5 +1,6 @@
 import sys
 import os
+from PyPDF2 import PdfReader
 
 def process_file(file_path):
     """Reads and extracts content from a file based on its type."""
@@ -17,7 +18,6 @@ def process_file(file_path):
                 extracted_data = file.read()
 
         elif file_extension == ".pdf":
-            from PyPDF2 import PdfReader
             reader = PdfReader(file_path)
             extracted_data = "\n".join([page.extract_text() or "" for page in reader.pages])
 
@@ -27,10 +27,7 @@ def process_file(file_path):
         else:
             extracted_data = f"⚠️ Unsupported file format: {file_extension}"
 
-        # Print extracted data to the terminal
-        print("\n========== Extracted Data ==========")
         print(extracted_data)
-        print("\n====================================\n")
 
     except Exception as e:
         print(f"❌ Error processing file: {str(e)}")
@@ -40,8 +37,5 @@ if __name__ == "__main__":
         print("❌ No file path provided.")
         sys.exit(1)
 
-    # Handle spaces in file paths
-    file_path = " ".join(sys.argv[1:])
-    print(f"📂 Processing file: {file_path}\n")
-    
+    file_path = " ".join(sys.argv[1:])  # Handle spaces in file paths
     process_file(file_path)

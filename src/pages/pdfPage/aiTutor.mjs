@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import fs from "fs";
 import path from "path";
+import mammoth from "mammoth";
 import { PDFDocument } from "pdf-lib";
 import { Ollama } from "@langchain/ollama";
 
@@ -26,6 +27,7 @@ const sessionMemory = {
   availableFiles: [],
 };
 
+// 📝 Extract text from PDFs
 async function extractTextFromPDF(filePath) {
   try {
     const pdfBytes = fs.readFileSync(filePath);
@@ -39,11 +41,34 @@ async function extractTextFromPDF(filePath) {
   }
 }
 
+// 📝 Extract text from .docx files
+async function extractTextFromDocx(filePath) {
+  try {
+    const docxBuffer = fs.readFileSync(filePath);
+    const { value: text } = await mammoth.extractRawText({ buffer: docxBuffer });
+    return text.trim() || "❌ No text found in DOCX.";
+  } catch (error) {
+    return `❌ Error reading DOCX: ${error.message}`;
+  }
+}
+
+// 📝 Read .txt, .pdf, .docx, and .md files
 async function readFileContent(filePath) {
   try {
     const absolutePath = path.resolve(sessionMemory.currentDirectory, filePath);
     if (!fs.existsSync(absolutePath)) return `❌ File not found: ${filePath}`;
-    let content = filePath.endsWith(".pdf") ? await extractTextFromPDF(absolutePath) : fs.readFileSync(absolutePath, "utf8");
+
+    let content = "";
+    if (filePath.toLowerCase().endsWith(".pdf")) {
+      content = await extractTextFromPDF(absolutePath);
+    } else if (filePath.toLowerCase().endsWith(".docx")) {
+      content = await extractTextFromDocx(absolutePath);
+    } else if (filePath.toLowerCase().endsWith(".txt") || filePath.toLowerCase().endsWith(".md")) {
+      content = fs.readFileSync(absolutePath, "utf8");
+    } else {
+      return "❌ Unsupported file format. Please select a .txt, .md, .pdf, or .docx file.";
+    }
+
     sessionMemory.documentContent = content;
     return `✅ Loaded document: ${filePath}`;
   } catch (error) {
@@ -63,13 +88,13 @@ app.get("/list-files", (req, res) => {
 });
 
 app.post("/chat", async (req, res) => {
-  const userMessage = req.body.message.toLowerCase().trim(); // Normalize input
+  const userMessage = req.body.message.trim();
   console.log("User:", userMessage);
-  
+
   sessionMemory.conversation.push(`User: ${userMessage}`);
   let botResponse = "";
 
-  if (userMessage === "list files") {
+  if (userMessage.toLowerCase() === "list files") {
     // Fetch and return available files
     const files = fs.readdirSync(sessionMemory.currentDirectory);
     sessionMemory.availableFiles = files;
@@ -77,12 +102,14 @@ app.post("/chat", async (req, res) => {
       ? `📂 Available files:\n${files.map((f, i) => `${i + 1}. ${f}`).join("\n")}`
       : "📂 No files found in the current directory.";
   } 
-  else if (userMessage.startsWith("select ")) {
-    const fileName = userMessage.substring(7).trim();
-    if (sessionMemory.availableFiles.includes(fileName)) {
-      botResponse = await readFileContent(fileName);
+  else if (userMessage.toLowerCase().startsWith("select ")) {
+    const fileNameInput = userMessage.substring(7).trim();
+    const matchedFile = sessionMemory.availableFiles.find(f => f.toLowerCase() === fileNameInput.toLowerCase());
+
+    if (matchedFile) {
+      botResponse = await readFileContent(matchedFile);
     } else {
-      botResponse = `❌ File not found: ${fileName}`;
+      botResponse = `❌ File not found: ${fileNameInput}`;
     }
   } 
   else {
