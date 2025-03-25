@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import fs from "fs";
 import path from "path";
-import { spawn } from "child_process";
 import { PDFDocument } from "pdf-lib";
 import { Ollama } from "@langchain/ollama";
 
@@ -17,151 +16,78 @@ const llm = new Ollama({
   top_p: 0.85,
   presence_penalty: 0.6,
   frequency_penalty: 0.5,
-  system_prompt: `You are an AI tutor assisting students in an interactive chat. 
-  - Your responses should be **clear, concise, and structured**. 
-  - When explaining concepts, use **short paragraphs, bullet points, and examples**.
-  - Use line breaks to improve readability in the chatbox.
-  - If a user asks for step-by-step guidance, number the steps for clarity.
-  - Keep explanations **friendly and engaging**.`,
+  system_prompt: `You are an AI tutor assisting students. Use document content as a reference for answering queries.`
 });
 
-// Memory for storing session data
 const sessionMemory = {
   conversation: [],
-  fileContents: {},
+  documentContent: "",
   currentDirectory: process.cwd(),
+  availableFiles: [],
 };
 
-/**
- * Recursively lists files and folders
- */
-function listFilesAndFolders(dir = sessionMemory.currentDirectory, depth = 1) {
-  try {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    let output = `📂 Directory: ${dir}\n`;
-
-    entries.forEach((entry, index) => {
-      output += entry.isDirectory()
-        ? `📁 [${index}] ${entry.name}/\n`
-        : `📄 [${index}] ${entry.name}\n`;
-    });
-
-    return output || "📂 Directory is empty.";
-  } catch (error) {
-    return `❌ Error listing files: ${error.message}`;
-  }
-}
-
-/**
- * Change directory
- */
-function changeDirectory(folderName) {
-  const newPath = path.join(sessionMemory.currentDirectory, folderName);
-
-  if (!fs.existsSync(newPath) || !fs.lstatSync(newPath).isDirectory()) {
-    return `❌ Directory not found: ${folderName}`;
-  }
-
-  sessionMemory.currentDirectory = newPath;
-  return `📂 Changed directory to: ${newPath}`;
-}
-
-/**
- * Go back to the parent directory
- */
-function goBack() {
-  const parentDir = path.dirname(sessionMemory.currentDirectory);
-
-  if (parentDir === sessionMemory.currentDirectory) {
-    return "🔒 Already at the root directory.";
-  }
-
-  sessionMemory.currentDirectory = parentDir;
-  return `📂 Moved up to: ${parentDir}`;
-}
-
-/**
- * Extracts text from PDFs using pdf-lib
- */
 async function extractTextFromPDF(filePath) {
   try {
     const pdfBytes = fs.readFileSync(filePath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
-    const pages = pdfDoc.getPages();
-    let text = "";
-
-    for (const page of pages) {
-      const { items } = await page.getTextContent();
-      text += items.map((item) => item.str).join(" ") + "\n\n";
-    }
-
-    return text.trim() || "❌ No text found in PDF.";
+    const text = (await Promise.all(pdfDoc.getPages().map(page => page.getTextContent())))
+      .map(({ items }) => items.map(item => item.str).join(" "))
+      .join("\n\n");
+    return text || "❌ No text found in PDF.";
   } catch (error) {
     return `❌ Error reading PDF: ${error.message}`;
   }
 }
 
-/**
- * Reads any file (TXT, MD, JSON, JS, etc.)
- */
-async function readAnyFile(filePath) {
+async function readFileContent(filePath) {
   try {
     const absolutePath = path.resolve(sessionMemory.currentDirectory, filePath);
-    if (!fs.existsSync(absolutePath)) {
-      return `❌ File not found: ${filePath}`;
-    }
-
-    let fileContent = "";
-    if (filePath.endsWith(".pdf")) {
-      fileContent = await extractTextFromPDF(absolutePath);
-    } else {
-      fileContent = fs.readFileSync(absolutePath, "utf8");
-    }
-
-    sessionMemory.fileContents[filePath] = fileContent;
-    return `✅ Successfully read: ${filePath}`;
+    if (!fs.existsSync(absolutePath)) return `❌ File not found: ${filePath}`;
+    let content = filePath.endsWith(".pdf") ? await extractTextFromPDF(absolutePath) : fs.readFileSync(absolutePath, "utf8");
+    sessionMemory.documentContent = content;
+    return `✅ Loaded document: ${filePath}`;
   } catch (error) {
     return `❌ Error reading file: ${error.message}`;
   }
 }
 
-/**
- * Selects multiple files for context
- */
-async function selectMultipleFiles(fileNames) {
-  let response = "";
-  for (const fileName of fileNames) {
-    response += await readAnyFile(fileName) + "\n";
+// 📂 List files in the current directory
+app.get("/list-files", (req, res) => {
+  try {
+    const files = fs.readdirSync(sessionMemory.currentDirectory);
+    sessionMemory.availableFiles = files;
+    res.json({ files });
+  } catch (error) {
+    res.status(500).json({ error: `❌ Error listing files: ${error.message}` });
   }
-  return response;
-}
+});
 
-/**
- * AI Chat Processing with Context
- */
 app.post("/chat", async (req, res) => {
-  const userMessage = req.body.message;
+  const userMessage = req.body.message.toLowerCase().trim(); // Normalize input
   console.log("User:", userMessage);
-
+  
   sessionMemory.conversation.push(`User: ${userMessage}`);
   let botResponse = "";
 
-  if (userMessage.toLowerCase() === "list files") {
-    botResponse = listFilesAndFolders();
-  } else if (userMessage.startsWith("cd ")) {
-    botResponse = changeDirectory(userMessage.substring(3));
-  } else if (userMessage.toLowerCase() === "go back") {
-    botResponse = goBack();
-  } else if (userMessage.startsWith("open ")) {
-    const fileNames = userMessage.substring(5).split(",").map((f) => f.trim());
-    botResponse = await selectMultipleFiles(fileNames);
-  } else {
-    const fileContext = Object.entries(sessionMemory.fileContents)
-      .map(([name, content]) => `File: ${name}\n${content}`)
-      .join("\n\n");
-
-    const context = `Stored Files:\n${fileContext}\n\nConversation History:\n${sessionMemory.conversation.join("\n")}\nTutor:`;
-
+  if (userMessage === "list files") {
+    // Fetch and return available files
+    const files = fs.readdirSync(sessionMemory.currentDirectory);
+    sessionMemory.availableFiles = files;
+    botResponse = files.length
+      ? `📂 Available files:\n${files.map((f, i) => `${i + 1}. ${f}`).join("\n")}`
+      : "📂 No files found in the current directory.";
+  } 
+  else if (userMessage.startsWith("select ")) {
+    const fileName = userMessage.substring(7).trim();
+    if (sessionMemory.availableFiles.includes(fileName)) {
+      botResponse = await readFileContent(fileName);
+    } else {
+      botResponse = `❌ File not found: ${fileName}`;
+    }
+  } 
+  else {
+    // Provide AI model with relevant context
+    const context = `Document Content:\n${sessionMemory.documentContent}\n\nConversation History:\n${sessionMemory.conversation.join("\n")}\nTutor:`;
     try {
       botResponse = await llm.invoke(context);
     } catch (error) {
@@ -175,6 +101,5 @@ app.post("/chat", async (req, res) => {
   res.json({ response: botResponse });
 });
 
-// Start the server
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 AI Tutor running on http://localhost:${PORT}`));
