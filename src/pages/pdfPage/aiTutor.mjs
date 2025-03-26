@@ -3,8 +3,8 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import mammoth from "mammoth";
-import { PDFDocument } from "pdf-lib";
 import { Ollama } from "@langchain/ollama";
+import { spawn } from "child_process";
 
 const app = express();
 app.use(cors());
@@ -27,18 +27,40 @@ const sessionMemory = {
   availableFiles: [],
 };
 
-// 📝 Extract text from PDFs
+// 📝 Extract text from PDFs using Python
 async function extractTextFromPDF(filePath) {
-  try {
-    const pdfBytes = fs.readFileSync(filePath);
-    const pdfDoc = await PDFDocument.load(pdfBytes);
-    const text = (await Promise.all(pdfDoc.getPages().map(page => page.getTextContent())))
-      .map(({ items }) => items.map(item => item.str).join(" "))
-      .join("\n\n");
-    return text || "❌ No text found in PDF.";
-  } catch (error) {
-    return `❌ Error reading PDF: ${error.message}`;
-  }
+  return new Promise((resolve, reject) => {
+      const absolutePath = path.resolve(filePath); // Ensure absolute path
+      if (!fs.existsSync(absolutePath)) {
+          return reject(`❌ File not found: ${filePath}`);
+      }
+
+      console.log(`📄 Processing PDF: ${absolutePath}`); // Debugging
+
+      const pythonProcess = spawn("python3", ["pdf_reader.py", absolutePath]); // No quotes needed
+
+      let result = "";
+      pythonProcess.stdout.on("data", (data) => {
+          result += data.toString();
+      });
+
+      pythonProcess.stderr.on("data", (data) => {
+          console.error("❌ Python Error:", data.toString());
+      });
+
+      pythonProcess.on("close", (code) => {
+          if (code === 0) {
+              try {
+                  const output = JSON.parse(result);
+                  resolve(output.text);
+              } catch (err) {
+                  reject("❌ Error parsing Python output.");
+              }
+          } else {
+              reject(`❌ Python script exited with code ${code}`);
+          }
+      });
+  });
 }
 
 // 📝 Extract text from .docx files
@@ -46,13 +68,16 @@ async function extractTextFromDocx(filePath) {
   try {
     const docxBuffer = fs.readFileSync(filePath);
     const { value: text } = await mammoth.extractRawText({ buffer: docxBuffer });
+
+    console.log(`📖 Extracted Text from ${filePath}:\n${text.slice(0, 500)}...`); // Log first 500 chars
     return text.trim() || "❌ No text found in DOCX.";
   } catch (error) {
+    console.error("DOCX Parsing Error:", error);
     return `❌ Error reading DOCX: ${error.message}`;
   }
 }
 
-// 📝 Read .txt, .pdf, .docx, and .md files
+// 📝 Read .txt, .pdf, .docx, .md, and code files
 async function readFileContent(filePath) {
   try {
     const absolutePath = path.resolve(sessionMemory.currentDirectory, filePath);
@@ -63,15 +88,37 @@ async function readFileContent(filePath) {
       content = await extractTextFromPDF(absolutePath);
     } else if (filePath.toLowerCase().endsWith(".docx")) {
       content = await extractTextFromDocx(absolutePath);
-    } else if (filePath.toLowerCase().endsWith(".txt") || filePath.toLowerCase().endsWith(".md")) {
+    } 
+    // 📜 Read plain text-based files (Markdown, text, and code files)
+    else if (
+      filePath.toLowerCase().endsWith(".txt") ||
+      filePath.toLowerCase().endsWith(".md") ||
+      filePath.toLowerCase().endsWith(".js") ||
+      filePath.toLowerCase().endsWith(".ts") ||
+      filePath.toLowerCase().endsWith(".py") ||
+      filePath.toLowerCase().endsWith(".cpp") ||
+      filePath.toLowerCase().endsWith(".c") ||
+      filePath.toLowerCase().endsWith(".java") ||
+      filePath.toLowerCase().endsWith(".html") ||
+      filePath.toLowerCase().endsWith(".css") ||
+      filePath.toLowerCase().endsWith(".json")
+    ) {
       content = fs.readFileSync(absolutePath, "utf8");
+
+      // ⚠️ If the file is too long, truncate it
+      if (content.length > 5000) {
+        content = content.slice(0, 5000) + "\n\n[⚠️ Truncated due to length]";
+      }
+
+      console.log(`📖 Extracted Text from ${filePath}:\n${content.slice(0, 500)}...`); // Log first 500 chars
     } else {
-      return "❌ Unsupported file format. Please select a .txt, .md, .pdf, or .docx file.";
+      return "❌ Unsupported file format. Please select a .txt, .md, .pdf, .docx, or code file.";
     }
 
     sessionMemory.documentContent = content;
     return `✅ Loaded document: ${filePath}`;
   } catch (error) {
+    console.error("File Reading Error:", error);
     return `❌ Error reading file: ${error.message}`;
   }
 }
@@ -89,13 +136,12 @@ app.get("/list-files", (req, res) => {
 
 app.post("/chat", async (req, res) => {
   const userMessage = req.body.message.trim();
-  console.log("User:", userMessage);
+  console.log("👤 User:", userMessage);
 
   sessionMemory.conversation.push(`User: ${userMessage}`);
   let botResponse = "";
 
   if (userMessage.toLowerCase() === "list files") {
-    // Fetch and return available files
     const files = fs.readdirSync(sessionMemory.currentDirectory);
     sessionMemory.availableFiles = files;
     botResponse = files.length
@@ -112,21 +158,47 @@ app.post("/chat", async (req, res) => {
       botResponse = `❌ File not found: ${fileNameInput}`;
     }
   } 
+  else if (userMessage.toLowerCase().includes("what is the file about") || userMessage.toLowerCase().includes("topics covered")) {
+    if (!sessionMemory.documentContent) {
+      botResponse = "❌ No document loaded. Please select a file first.";
+    } else {
+      const prompt = `Analyze the following document and summarize its contents:\n\n${sessionMemory.documentContent}\n\nSummary:`;
+      try {
+        botResponse = await llm.invoke(prompt);
+      } catch (error) {
+        console.error("❌ AI Error:", error);
+        botResponse = "❌ AI Error! Failed to generate summary.";
+      }
+    }
+  } 
+  else if (userMessage.toLowerCase().includes("line by line explanation")) {
+    if (!sessionMemory.documentContent) {
+      botResponse = "❌ No document loaded. Please select a file first.";
+    } else {
+      const prompt = `Provide a detailed, line-by-line explanation of the following code:\n\n${sessionMemory.documentContent}\n\nExplanation:`;
+      try {
+        botResponse = await llm.invoke(prompt);
+      } catch (error) {
+        console.error("❌ AI Error:", error);
+        botResponse = "❌ AI Error! Failed to explain the code.";
+      }
+    }
+  }
   else {
-    // Provide AI model with relevant context
     const context = `Document Content:\n${sessionMemory.documentContent}\n\nConversation History:\n${sessionMemory.conversation.join("\n")}\nTutor:`;
     try {
       botResponse = await llm.invoke(context);
     } catch (error) {
-      console.error("AI Error:", error);
+      console.error("❌ AI Error:", error);
       botResponse = "❌ AI Error! Failed to process request.";
     }
   }
 
-  console.log("Tutor:", botResponse);
+  console.log("🤖 Tutor:", botResponse);
   sessionMemory.conversation.push(`Tutor: ${botResponse}`);
   res.json({ response: botResponse });
 });
+
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 AI Tutor running on http://localhost:${PORT}`));

@@ -9,7 +9,7 @@
   overflow: hidden;
 }
 
-/* Content is divided into two equal halves */
+/* Content is divided into two sections: PDF Viewer & Chat */
 .content {
   display: flex;
   flex: 1;
@@ -21,18 +21,19 @@
 .pdf-viewer {
   flex: 1;
   display: flex;
-  width: 75%;
   flex-direction: column;
   align-items: center;
   background: #181818;
   padding: 10px;
-  overflow: hidden;
+  overflow: auto; /* Allow scrolling */
   position: relative;
+  width: 75%;
+  height: 100vh;
 }
 
-/* Styling for the document */
+/* Document container to ensure it fits correctly */
 .doc {
-  flex: 1; /* Take available space */
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -40,40 +41,57 @@
   background: #202020;
   padding: 10px;
   border-radius: 8px;
+  overflow: auto; /* Prevent cutting off */
 }
 
-/* Controls (Zoom & Navigation Buttons) - Positioned at Bottom */
+/* Ensure PDF pages scale correctly */
+.react-pdf__Page {
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Controls (Zoom & Navigation Buttons) - Fixed at Bottom */
 .controls {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
   padding: 10px;
   position: absolute;
   bottom: 0;
   left: 0;
   background: #222;
   border-top: 2px solid #333;
+  z-index: 1000;
 }
 
+/* Page Number Indicator */
+.pagenum {
+  font-size: 14px;
+  color: white;
+  padding: 5px 10px;
+  background: #333;
+  border-radius: 5px;
+}
+
+/* Buttons for PDF Controls */
 .controls button {
   background: #444;
   color: white;
   border: none;
-  padding: 8px 12px;
+  padding: 10px 15px;
   border-radius: 5px;
   cursor: pointer;
   transition: 0.3s;
+  font-size: 16px;
 }
 
 .controls button:hover {
   background: #666;
-}
-
-.pagenum {
-  text-align: center;
-  font-size: 14px;
 }
 
 /* Chatbox on the right */
@@ -88,10 +106,10 @@
   overflow: hidden;
   position: relative;
   width: 25%;
+  height: 100vh;
 }
 
-
-/* Send button */
+/* Send button in chat */
 .send-button {
   padding: 8px 12px;
   background: orange;
