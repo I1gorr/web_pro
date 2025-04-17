@@ -74,16 +74,7 @@
   border-top-right-radius: 0;
   text-align: left;
 }
-/* Input field & send button stay at bottom */
-.chat-input {
-  display: flex;
-  align-items: center;
-  background: #222;
-  padding: 10px;
-  width: 100%;
-  border-top: 2px solid #333;
-}
-
+/* Chat Input Bar at Bottom */
 .chat-input {
   display: flex;
   align-items: center;
@@ -95,29 +86,32 @@
   position: sticky;
   bottom: 0;
   left: 0;
+  z-index: 10;
+  box-sizing: border-box;
 }
 
-/* Input field should be rectangular */
-.chat-input textarea {
+/* Rectangular TextArea */
+.chat-input textarea,
+.chat-textarea {
   flex-grow: 1;
-  border-radius: 0; /* Removes rounded edges */
+  border-radius: 0;
   resize: none;
   padding: 10px;
   border: 2px solid #444;
   background: #333;
   color: white;
   font-size: 16px;
-  height: 30px; /* Makes it more like a text field */
-
+  height: 40px; /* A bit taller for better UX */
+  box-sizing: border-box;
 }
 
-/* Send button should be rectangular */
+/* Rectangular Send Button */
 .send-button {
   margin-left: 10px;
   padding: 10px 16px;
   background: orange;
   border: 2px solid #444;
-  border-radius: 0; /* Removes rounded corners */
+  border-radius: 0;
   cursor: pointer;
   color: black;
   font-weight: bold;
@@ -127,10 +121,10 @@
   background: darkorange;
 }
 
-/* Mobile responsive fixes */
+/* Responsive Adjustments */
 @media (max-width: 768px) {
   .chat-box {
-    height: 100vh; /* Ensure it covers the whole screen */
+    height: 100vh;
   }
 
   .chat-input {

@@ -84,16 +84,16 @@
 
                 {/* Chat Input - Stays Fixed at Bottom */}
                 <div className="chat-input">
-                    <MDBTextArea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      rows={2}
-                      className="bg-dark text-light"
-                    />
-                    <button className="send-button" onClick={sendMessage}>
-                      Send
-                    </button>
-                  </div>
+                      <MDBTextArea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        rows={2}
+                        className="bg-dark text-light chat-textarea"
+                      />
+                      <button className="send-button" onClick={sendMessage}>
+                        Send
+                      </button>
+                    </div>
 
               </MDBCard>
             </MDBCol>

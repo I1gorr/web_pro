@@ -86,7 +86,7 @@ async function readFileContent(filePath) {
     let content = "";
     if (filePath.toLowerCase().endsWith(".pdf")) {
       content = await extractTextFromPDF(absolutePath);
-    } else if (filePath.toLowerCase().endsWith(".docx")) {
+    } else if (filePath.toLowerCase().endsWith(".docx") || filePath.toLowerCase().endsWith(".doc")) {
       content = await extractTextFromDocx(absolutePath);
     } 
     // 📜 Read plain text-based files (Markdown, text, and code files)
