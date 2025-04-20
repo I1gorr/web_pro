@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import "./forum.css";
@@ -15,27 +15,41 @@ export default function Forum() {
   const [filterCategory, setFilterCategory] = useState("All");
   const [expandedPost, setExpandedPost] = useState(null);
 
-  const addPost = () => {
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const response = await fetch("http://localhost:5000/api/posts");
+      const data = await response.json();
+      setPosts(data);
+    };
+    fetchPosts();
+  }, []);
+
+  const addPost = async () => {
     if (newPost.username.trim() === "" || newPost.content.trim() === "") return;
     const post = {
-      id: Date.now(),
       username: newPost.username,
       content: newPost.content,
       category: newPost.category,
-      answers: [],
     };
-    setPosts([post, ...posts]);
+
+    const response = await fetch("http://localhost:5000/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(post),
+    });
+    const data = await response.json();
+    setPosts([data, ...posts]);
     setNewPost({ username: "", content: "", category: "Misc" });
   };
 
-  const addAnswer = (postId, answer) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId
-          ? { ...post, answers: [...post.answers, { text: answer }] }
-          : post
-      )
-    );
+  const addAnswer = async (postId, answer) => {
+    const response = await fetch(`http://localhost:5000/api/posts/${postId}/answers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answer }),
+    });
+    const data = await response.json();
+    setPosts(posts.map((post) => (post._id === postId ? data : post)));
   };
 
   const filteredPosts =
@@ -45,7 +59,6 @@ export default function Forum() {
 
   return (
     <StyledForumContainer>
-      {/* Floating Filter Dropdown */}
       <div className="floating-filter">
         <label>Filter by domain:</label>
         <select
@@ -60,7 +73,6 @@ export default function Forum() {
         </select>
       </div>
 
-      {/* Search Bar */}
       <div className="search-bar">
         <input
           type="text"
@@ -70,10 +82,8 @@ export default function Forum() {
         />
       </div>
 
-      {/* Center Content */}
       <div className="center-content">
         <div className="content-wrapper">
-          {/* Create Post */}
           <div className="create-post">
             <h3>Create Post</h3>
             <input
@@ -108,7 +118,6 @@ export default function Forum() {
             <button onClick={addPost}>Post</button>
           </div>
 
-          {/* Posts */}
           <div>
             {filteredPosts.length > 0 ? (
               filteredPosts
@@ -122,17 +131,12 @@ export default function Forum() {
                       .includes(searchQuery.toLowerCase())
                 )
                 .map((post) => (
-                  <div className="post" key={post.id}>
+                  <div className="post" key={post._id}>
                     <h4
                       onClick={() =>
-                        setExpandedPost(
-                          expandedPost === post.id ? null : post.id
-                        )
+                        setExpandedPost(expandedPost === post._id ? null : post._id)
                       }
-                      style={{
-                        cursor: "pointer",
-                        color: "white",
-                      }}
+                      style={{ cursor: "pointer", color: "white" }}
                     >
                       {post.content}{" "}
                       <span style={{ fontSize: "14px", color: "#888" }}>
@@ -143,8 +147,7 @@ export default function Forum() {
                       <strong>Domain:</strong> {post.category}
                     </p>
 
-                    {/* Answers */}
-                    {expandedPost === post.id && (
+                    {expandedPost === post._id && (
                       <div>
                         {post.answers.length > 0 ? (
                           <div className="answers">
@@ -156,14 +159,13 @@ export default function Forum() {
                         ) : (
                           <p>No answers yet.</p>
                         )}
-                        {/* Answer Input */}
                         <div className="answer-input">
                           <textarea
                             placeholder="Write your answer..."
                             onKeyDown={(e) => {
                               if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
-                                addAnswer(post.id, e.target.value);
+                                addAnswer(post._id, e.target.value);
                                 e.target.value = "";
                                 setExpandedPost(null);
                               }
@@ -181,7 +183,6 @@ export default function Forum() {
         </div>
       </div>
 
-      {/* Navigate Button */}
       <button className="navigate-button" onClick={() => navigate("/notes")}>
         Your Notes
       </button>
