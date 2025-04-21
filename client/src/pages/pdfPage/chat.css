@@ -1,80 +1,66 @@
-/* Make chat box take full height of the screen */
 .chat-box {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end; /* Moves chat to bottom */
-  height: 100vh; /* Full viewport height */
+  height: 100vh;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: #121212;
-  padding: 10px;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Chat card should expand fully */
 .chat-card {
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Ensures input stays at bottom */
   height: 100%;
   width: 100%;
-  border-radius: 10px;
-  overflow: hidden;
   background: #1e1e1e;
+  border-radius: 0;
 }
 
-/* Chat body should fill available space */
 .chat-body {
-  flex: 1; /* Ensures it takes up all remaining space */
+  width: 100%;
+  flex-grow: 1;
   overflow-y: auto;
   padding: 10px;
-  height: 100%;
   background: #1e1e1e;
   scrollbar-width: thin;
   scrollbar-color: #888 #1e1e1e;
-  max-height: calc(100vh - 111px); /* Adjust based on input field height */
+  box-sizing: border-box;
 }
 
-/* Custom scrollbar */
 .chat-body::-webkit-scrollbar {
   width: 5px;
 }
-
 .chat-body::-webkit-scrollbar-thumb {
   background: #555;
   border-radius: 5px;
 }
-/* Chat bubbles */
+
+.chat-messages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
 .chat-bubble {
   max-width: 75%;
   padding: 8px 12px;
   border-radius: 10px;
   color: white;
   word-wrap: break-word;
-  text-align: left; /* Ensure text is left-aligned */
+  text-align: left;
 }
 
-/* Left-aligned for user messages */
 .chat-bubble.left {
   background: #333;
   border-top-left-radius: 0;
-  text-align: left;
-}
-.chat-input textarea {
-  flex-grow: 1;
-  border-radius: 0; /* Removes rounded edges */
-  resize: none;
-  padding: 10px;
-  border: 2px solid #444;
-  background: #333;
-  color: white;
-  font-size: 16px;
-  height: 40px; /* Makes it more like a text field */
 }
 .chat-bubble.right {
   background: #007bff;
   border-top-right-radius: 0;
-  text-align: left;
 }
-/* Chat Input Bar at Bottom */
+
 .chat-input {
   display: flex;
   align-items: center;
@@ -82,7 +68,6 @@
   padding: 10px;
   width: 100%;
   border-top: 2px solid #333;
-  border-radius: 0; /* Removes rounded corners */
   position: sticky;
   bottom: 0;
   left: 0;
@@ -90,9 +75,7 @@
   box-sizing: border-box;
 }
 
-/* Rectangular TextArea */
-.chat-input textarea,
-.chat-textarea {
+.chat-input textarea {
   flex-grow: 1;
   border-radius: 0;
   resize: none;
@@ -101,11 +84,10 @@
   background: #333;
   color: white;
   font-size: 16px;
-  height: 40px; /* A bit taller for better UX */
+  height: 40px;
   box-sizing: border-box;
 }
 
-/* Rectangular Send Button */
 .send-button {
   margin-left: 10px;
   padding: 10px 16px;
@@ -121,7 +103,6 @@
   background: darkorange;
 }
 
-/* Responsive Adjustments */
 @media (max-width: 768px) {
   .chat-box {
     height: 100vh;
