@@ -17,7 +17,7 @@ export default function Forum() {
 
   useEffect(() => {
     const fetchPosts = async () => {
-      const response = await fetch("http://localhost:5000/api/posts");
+      const response = await fetch("http://localhost:5002/api/posts");
       const data = await response.json();
       setPosts(data);
     };
@@ -32,7 +32,7 @@ export default function Forum() {
       category: newPost.category,
     };
 
-    const response = await fetch("http://localhost:5000/api/posts", {
+    const response = await fetch("http://localhost:5002/api/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(post),
@@ -43,7 +43,7 @@ export default function Forum() {
   };
 
   const addAnswer = async (postId, answer) => {
-    const response = await fetch(`http://localhost:5000/api/posts/${postId}/answers`, {
+    const response = await fetch(`http://localhost:5002/api/posts/${postId}/answers`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ answer }),
