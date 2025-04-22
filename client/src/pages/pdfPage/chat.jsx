@@ -1,10 +1,28 @@
 import React, { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import "./chat.css";
 
 export default function Chat() {
   const chatBodyRef = useRef(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [fileList, setFileList] = useState([]);
+  const [showFileList, setShowFileList] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  useEffect(() => {
+    const fetchFileList = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/list-files");
+        const data = await response.json();
+        setFileList(data.files || []);
+      } catch (error) {
+        console.error("Error fetching file list:", error);
+      }
+    };
+
+    fetchFileList();
+  }, []);
 
   useEffect(() => {
     if (chatBodyRef.current) {
@@ -20,25 +38,74 @@ export default function Chat() {
     setInput("");
 
     try {
-      const response = await fetch("http://localhost:5000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
-      });
+      let response;
+
+      if (input.toLowerCase().startsWith("select ")) {
+        const fileName = input.substring(7).trim();
+        response = await fetch("http://localhost:5000/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: `select ${fileName}` }),
+        });
+      } else {
+        response = await fetch("http://localhost:5000/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: input }),
+        });
+      }
 
       const data = await response.json();
-      const botMessage = { sender: "Tutor", text: data.response };
 
-      setMessages((prev) => [...prev, botMessage]);
+      if (data.response) {
+        const botMessage = { sender: "Tutor", text: data.response };
+        setMessages((prev) => [...prev, botMessage]);
+      } else {
+        const errorMessage = { sender: "Tutor", text: "Sorry, I couldn't process your request." };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
+      const errorMessage = { sender: "Tutor", text: "Something went wrong. Please try again." };
+      setMessages((prev) => [...prev, errorMessage]);
     }
+  };
+
+  const handleFileSelect = (fileName) => {
+    setSelectedFile(fileName);
+    setInput(`select ${fileName}`);
+    sendMessage();
+    setShowFileList(false);
   };
 
   return (
     <div className="chat-box">
       <div className="chat-card">
-        {/* Chat body - Scrollable section */}
+        <div className="file-list-button">
+          <button className="file-list-toggle" onClick={() => setShowFileList(!showFileList)}>
+            {showFileList ? "Close File List" : "Open File List"}
+          </button>
+        </div>
+
+        {showFileList && (
+          <div className="file-list">
+            <h5>Available Files</h5>
+            <ul>
+              {fileList.length > 0 ? (
+                fileList.map((file, index) => (
+                  <li key={index} className="file-item">
+                    <button className="file-select-button" onClick={() => handleFileSelect(file)}>
+                      {file}
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li>No files available.</li>
+              )}
+            </ul>
+          </div>
+        )}
+
         <div className="chat-body" ref={chatBodyRef}>
           <ul className="chat-messages">
             {messages.map((msg, index) => (
@@ -51,12 +118,13 @@ export default function Chat() {
                 <div className={`chat-bubble ${msg.sender === "User" ? "right" : "left"}`}>
                   <div className="p-2">
                     <strong>{msg.sender}</strong>
-                    <p
-                      className="mb-0"
-                      dangerouslySetInnerHTML={{
-                        __html: msg.text.replace(/\n/g, "<br />"),
-                      }}
-                    ></p>
+                    <div className="mb-0">
+                      {msg.sender === "Tutor" ? (
+                        <ReactMarkdown>{msg.text}</ReactMarkdown>
+                      ) : (
+                        msg.text
+                      )}
+                    </div>
                   </div>
                 </div>
               </li>
@@ -64,7 +132,6 @@ export default function Chat() {
           </ul>
         </div>
 
-        {/* Chat Input - Stays Fixed at Bottom */}
         <div className="chat-input">
           <textarea
             value={input}
