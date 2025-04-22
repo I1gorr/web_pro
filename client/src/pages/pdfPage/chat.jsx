@@ -10,6 +10,7 @@ export default function Chat() {
   const [showFileList, setShowFileList] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
+  // Fetch file list from FastAPI server
   useEffect(() => {
     const fetchFileList = async () => {
       try {
@@ -30,6 +31,7 @@ export default function Chat() {
     }
   }, [messages]);
 
+  // Send message to FastAPI server
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -38,39 +40,47 @@ export default function Chat() {
     setInput("");
 
     try {
-      let response;
+        let response;
 
-      if (input.toLowerCase().startsWith("select ")) {
-        const fileName = input.substring(7).trim();
-        response = await fetch("http://localhost:5000/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: `select ${fileName}` }),
-        });
-      } else {
-        response = await fetch("http://localhost:5000/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input }),
-        });
-      }
+        if (input.toLowerCase().startsWith("select ")) {
+            const fileName = input.substring(7).trim();
+            response = await fetch("http://localhost:5000/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json", // Ensure your frontend accepts JSON
+                },
+                body: JSON.stringify({ message: `select ${fileName}` }),
+            });
+        } else {
+            response = await fetch("http://localhost:5000/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json", // Ensure your frontend accepts JSON
+                },
+                body: JSON.stringify({ message: input }),
+            });
+        }
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.response) {
-        const botMessage = { sender: "Tutor", text: data.response };
-        setMessages((prev) => [...prev, botMessage]);
-      } else {
-        const errorMessage = { sender: "Tutor", text: "Sorry, I couldn't process your request." };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
+        if (data.response) {
+            const botMessage = { sender: "Tutor", text: data.response };
+            setMessages((prev) => [...prev, botMessage]);
+        } else {
+            const errorMessage = { sender: "Tutor", text: "Sorry, I couldn't process your request." };
+            setMessages((prev) => [...prev, errorMessage]);
+        }
     } catch (error) {
-      console.error("Error sending message:", error);
-      const errorMessage = { sender: "Tutor", text: "Something went wrong. Please try again." };
-      setMessages((prev) => [...prev, errorMessage]);
+        console.error("Error sending message:", error);
+        const errorMessage = { sender: "Tutor", text: "Something went wrong. Please try again." };
+        setMessages((prev) => [...prev, errorMessage]);
     }
-  };
+};
 
+
+  // Handle file selection from the file list
   const handleFileSelect = (fileName) => {
     setSelectedFile(fileName);
     setInput(`select ${fileName}`);

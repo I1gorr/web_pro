@@ -9,9 +9,10 @@ from langchain_ollama import OllamaLLM
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # Allow only your React frontend
+    allow_credentials=True,  # Allow cookies (if needed in the future)
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
 )
 
 class Message(BaseModel):
